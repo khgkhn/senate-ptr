@@ -9,10 +9,10 @@ permissions:
   contents: write
 jobs:
   fetch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04          # ubuntu-latest 가 10/19 부터 26 으로 바뀐다는 알림(2026-10-18) — 정해 둔다
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5        # Node 20 지원 종료 알림(2026-10-18) → Node 24 판
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install requests

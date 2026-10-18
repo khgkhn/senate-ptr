@@ -5,7 +5,7 @@
 
 출력: data/senate_ptr.json — 최근 120일 신고서 목록과 거래 줄
 """
-import json, re, html, time, datetime
+import json, re, html, time, datetime, sys
 from pathlib import Path
 import requests
 
@@ -15,25 +15,45 @@ CACHE = Path("data/reports"); CACHE.mkdir(parents=True, exist_ok=True)
 DAYS = 120
 S = requests.Session()
 S.headers["User-Agent"] = "Mozilla/5.0 (research; github.com senate-ptr)"
+STATUS = Path("data/status.json")   # 서버(NAS) 순찰이 읽는다 — 실패해도 GitHub 메일 대신 여기 남기고 고PD 우편함으로(2026-10-18)
+
+
+def _req(method, url, **kw):
+    """상원 사이트는 점검·일시 장애가 잦다(2026-10-18 일요일 아침 첫 접속에서 7초 만에 실패) → 20·40·80초 쉬며 4번까지."""
+    last = None
+    for k in range(4):
+        try:
+            r = S.request(method, url, timeout=60, **kw)
+            if r.status_code < 400:
+                return r
+            last = f"HTTP {r.status_code} {url} {r.text[:200]!r}"
+        except requests.RequestException as e:
+            last = f"{type(e).__name__} {url} {e}"[:300]
+        print("다시:", last, flush=True)
+        if k < 3:
+            time.sleep(20 * 2 ** k)
+    raise RuntimeError(last)
 
 
 def agree():
-    r = S.get(BASE + "/search/home/", timeout=60); r.raise_for_status()
-    tok = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', r.text).group(1)
-    S.post(BASE + "/search/home/", data={"prohibition_agreement": "1", "csrfmiddlewaretoken": tok},
-           headers={"Referer": BASE + "/search/home/"}, timeout=60).raise_for_status()
+    r = _req("GET", BASE + "/search/home/")
+    m = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', r.text)
+    if not m:                                   # 동의 페이지 모양이 바뀌었거나 점검 화면
+        raise RuntimeError("동의 페이지에 csrf 가 없음: " + re.sub(r"\s+", " ", r.text)[:300])
+    _req("POST", BASE + "/search/home/", data={"prohibition_agreement": "1", "csrfmiddlewaretoken": m.group(1)},
+         headers={"Referer": BASE + "/search/home/"})
 
 
 def search(since):
     out, start = [], 0
     while True:
         csrf = S.cookies.get("csrftoken")
-        r = S.post(BASE + "/search/report/data/", headers={"Referer": BASE + "/search/", "X-CSRFToken": csrf}, timeout=60, data={
+        r = _req("POST", BASE + "/search/report/data/", headers={"Referer": BASE + "/search/", "X-CSRFToken": csrf}, data={
             "start": str(start), "length": "100", "report_types": "[11]", "filer_types": "[]",
             "submitted_start_date": since.strftime("%m/%d/%Y 00:00:00"), "submitted_end_date": "",
             "candidate_state": "", "senator_state": "", "office_id": "", "first_name": "", "last_name": "",
             "csrfmiddlewaretoken": csrf})
-        r.raise_for_status(); j = r.json()
+        j = r.json()
         out += j["data"]
         start += 100
         if start >= j["recordsTotal"]:
@@ -52,7 +72,7 @@ def report(link):
     paper = "/paper/" in link
     rows = []
     if not paper:
-        t = S.get(BASE + link, timeout=60).text
+        t = _req("GET", BASE + link).text
         trs = re.findall(r"<tr[^>]*>(.*?)</tr>", t, re.S)
         head = cells(trs[0]) if trs else []
         for tr in trs[1:]:
@@ -76,7 +96,14 @@ def main():
                     "url": BASE + link, **r})
     OUT.write_text(json.dumps({"updated": datetime.datetime.utcnow().isoformat(timespec="minutes") + "Z", "reports": out}, ensure_ascii=False, indent=0))
     print(len(out), "reports")
+    return len(out)
 
 
 if __name__ == "__main__":
-    main()
+    now = datetime.datetime.utcnow().isoformat(timespec="minutes") + "Z"
+    try:
+        n = main()
+        STATUS.write_text(json.dumps({"ok": True, "at": now, "reports": n}, ensure_ascii=False))
+    except Exception as e:   # 끝내 실패해도 GitHub 실패 메일 대신 상태 파일로(서버 순찰 → 고PD 우편함). 지난 자료(senate_ptr.json)는 그대로
+        STATUS.write_text(json.dumps({"ok": False, "at": now, "error": f"{type(e).__name__}: {e}"[:600]}, ensure_ascii=False))
+        print("실패 — data/status.json 에 남김:", e, flush=True)
