@@ -1,6 +1,74 @@
 {
-"updated": "2026-11-17T05:11Z",
+"updated": "2026-11-18T04:38Z",
 "reports": [
+{
+"first": "John",
+"last": "Boozman",
+"name": "Boozman, John (Senator)",
+"title": "Periodic Transaction Report for 11/17/2026",
+"filed": "11/17/2026",
+"url": "https://efdsearch.senate.gov/search/view/ptr/21941188-c04d-4713-8e6f-d954918e93fd/",
+"id": "21941188-c04d-4713-8e6f-d954918e93fd",
+"paper": false,
+"rows": [
+{
+"#": "2",
+"Transaction Date": "10/21/2026",
+"Owner": "Joint",
+"Ticker": "CMBS",
+"Asset Name": "iShares CMBS ETF",
+"Asset Type": "Stock",
+"Type": "Sale (Partial)",
+"Amount": "$1,001 - $15,000",
+"Comment": "--"
+},
+{
+"#": "1",
+"Transaction Date": "10/21/2026",
+"Owner": "Joint",
+"Ticker": "TLH",
+"Asset Name": "iShares 10-20 Year Treasury Bond ETF",
+"Asset Type": "Stock",
+"Type": "Sale (Partial)",
+"Amount": "$1,001 - $15,000",
+"Comment": "--"
+}
+]
+},
+{
+"first": "John",
+"last": "Boozman",
+"name": "Boozman, John (Senator)",
+"title": "Periodic Transaction Report for 11/17/2026",
+"filed": "11/17/2026",
+"url": "https://efdsearch.senate.gov/search/view/ptr/06b7b716-bdc0-4c47-a4aa-96624e1e702c/",
+"id": "06b7b716-bdc0-4c47-a4aa-96624e1e702c",
+"paper": false,
+"rows": [
+{
+"#": "2",
+"Transaction Date": "10/21/2026",
+"Owner": "Joint",
+"Ticker": "HYBB",
+"Asset Name": "iShares BB Rated Corporate Bond ETF",
+"Asset Type": "Stock",
+"Type": "Purchase",
+"Amount": "$1,001 - $15,000",
+"Comment": "--"
+},
+{
+"#": "1",
+"Transaction Date": "10/21/2026",
+"Owner": "Joint",
+"Ticker": "MBB",
+"Asset Name": "iShares MBS ETF",
+"Asset Type": "Stock",
+"Type": "Purchase",
+"Amount": "$1,001 - $15,000",
+"Comment": "--"
+}
+]
+},
 {
 "first": "Shelley M",
 "last": "Capito",
